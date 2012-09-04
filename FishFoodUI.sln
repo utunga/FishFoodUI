@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishFood", "FishFood\FishFood.csproj", "{4DA42E62-919E-439A-86B1-2DDFB598C316}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishFoodUIContent", "FishFoodUIContent\FishFoodUIContent.contentproj", "{3A4232EE-D00C-4E09-BCEB-A154F3252035}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishFoodUI", "FishFoodUI\FishFoodUI.csproj", "{E81B9D4F-4F39-4B29-8634-2689507CAEB5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4DA42E62-919E-439A-86B1-2DDFB598C316}.Debug|x86.ActiveCfg = Debug|x86
+		{4DA42E62-919E-439A-86B1-2DDFB598C316}.Debug|x86.Build.0 = Debug|x86
+		{4DA42E62-919E-439A-86B1-2DDFB598C316}.Release|x86.ActiveCfg = Release|x86
+		{4DA42E62-919E-439A-86B1-2DDFB598C316}.Release|x86.Build.0 = Release|x86
+		{3A4232EE-D00C-4E09-BCEB-A154F3252035}.Debug|x86.ActiveCfg = Debug|x86
+		{3A4232EE-D00C-4E09-BCEB-A154F3252035}.Release|x86.ActiveCfg = Release|x86
+		{E81B9D4F-4F39-4B29-8634-2689507CAEB5}.Debug|x86.ActiveCfg = Debug|x86
+		{E81B9D4F-4F39-4B29-8634-2689507CAEB5}.Debug|x86.Build.0 = Debug|x86
+		{E81B9D4F-4F39-4B29-8634-2689507CAEB5}.Release|x86.ActiveCfg = Release|x86
+		{E81B9D4F-4F39-4B29-8634-2689507CAEB5}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
