@@ -6,12 +6,12 @@ namespace FishFood
 {
     public class FishBowl : IStateProvider, IStateSimulation
     {
-        private const int INIT_FISH_VAL = 10;
-        private const int NUM_FISH = 200;
+        private const int INIT_FISH_VAL = 60;
+        private const int NUM_FISH = 300;
         private readonly int _maxHeight;
         private readonly int _maxWidth;
-        private readonly IList<Fish> _fishes;
-        private readonly IList<Latch> _latches;
+        private IList<Fish> _fishes;
+        private IList<Latch> _latches;
         public const int DEFAULT_WIDTH = 1000;
         public const int DEFAULT_HEIGHT = 1000;
 
@@ -30,7 +30,7 @@ namespace FishFood
 
         public IList<Food> FoodNearMe(Fish fish)
         {
-            return new List<Food>(_fishes.AsParallel().Where(x => x.DistanceToFood(fish) < 50).OrderByDescending(x => x.DistanceToFood(fish)).Take(10));
+            return new List<Food>(_fishes.AsParallel().OrderBy(x => x.DistanceToFood(fish)).Take(5));
         }
 
         #endregion
@@ -39,12 +39,14 @@ namespace FishFood
 
         public void Init()
         {
+            _fishes = new List<Fish>();
+            _latches = new List<Latch>();
             Random rnd = new Random();
             for (int i = 0; i < NUM_FISH; i++)
             {
                 float x = rnd.Next(_maxHeight);
                 float y = rnd.Next(_maxWidth);
-                _fishes.Add(new Fish(this, INIT_FISH_VAL, "fish_" + i,x,y));
+                _fishes.Add(new Fish(this, INIT_FISH_VAL, "fish_" + i, x, y));
             }
         }
 
@@ -62,11 +64,10 @@ namespace FishFood
 
         public bool KeepGoing()
         {
-            return _fishes.Any();
+            return _fishes.Count > 0;
         }
 
         #endregion
-
 
         #region private helper methods
 
@@ -75,16 +76,19 @@ namespace FishFood
             // eat 
             foreach (Latch eatRequest in _latches.Where(x=>x.State==LatchState.Activated))
             {
-                int hunkEaten= Math.Min(eatRequest.Target.Val, eatRequest.Val);
-                eatRequest.Eater.Val += hunkEaten;
-                eatRequest.Target.Val -= hunkEaten;
-                eatRequest.State = LatchState.ToRemove;
+                if (eatRequest.Eater.DistanceToFood(eatRequest.Target) < 20)
+                {
+                    int hunkEaten = Math.Min(Math.Min(eatRequest.Target.Val, eatRequest.Val), eatRequest.Eater.Val/2);
+                    eatRequest.Eater.Val += hunkEaten;
+                    eatRequest.Target.Val -= hunkEaten;
+                    eatRequest.State = LatchState.ToRemove;
+                }
             }
 
             // starve all fish a little
             foreach (Fish fish in _fishes)
             {
-                fish.Val = fish.Val - 1;
+                fish.Val = fish.Val - (int)Math.Floor(fish.Val*0.008)-1;
             }
             
             // remove dead fish
@@ -132,9 +136,13 @@ namespace FishFood
                         //  unopposed request
                         latchRequest.State = LatchState.Activated;
                     }
-                    else
+                    else if (eater.Val>0 && target.Val>0)
                     {
                         DoBattleAndActivateWinner(latchRequest, counterRequest);
+                    }
+                    else
+                    {
+                        latchRequest.State = LatchState.ToRemove;
                     }
                 }
                 requests = _latches.Where(x => x.State == LatchState.RequestActivation).ToList();
@@ -172,6 +180,17 @@ namespace FishFood
                 {
                     nextMove.Eat.State = LatchState.RequestActivation;
                 }
+
+                if (nextMove.MoveTowards != null)
+                {
+                    float opposite = (nextMove.MoveTowards.Item1 - fish.X);
+                    float adjacent = (nextMove.MoveTowards.Item2 - fish.Y);
+                    double angle =  (float) Math.Atan2(adjacent, opposite);
+                    
+                    fish.X = fish.X + (float)Math.Cos(angle) * fish.Scale * 3; //bigger fish move faster
+                    fish.Y = fish.Y + (float)Math.Sin(angle) * fish.Scale * 3;
+                    fish.Rotate = (float) angle;
+                }
             }
         }
 
@@ -179,25 +198,25 @@ namespace FishFood
 
         #region methods for command line usage
 
-        public void Run()
-        {
-            Init();
-            while (KeepGoing())
-            {
-                UpdateState();
-                Draw();
-            }
-        }
+        //public void Run()
+        //{
+        //    Init();
+        //    while (KeepGoing())
+        //    {
+        //        UpdateState();
+        //        Draw();
+        //    }
+        //}
 
-        private void Draw()
-        {
-            Console.Out.WriteLine("------------------------------------");
-            foreach (var fish in _fishes)
-            {
-                fish.Draw();
-            }
-            Console.Out.WriteLine("------------------------------------");
-        }
+        //private void Draw()
+        //{
+        //    Console.Out.WriteLine("------------------------------------");
+        //    foreach (var fish in _fishes)
+        //    {
+        //        fish.Draw();
+        //    }
+        //    Console.Out.WriteLine("------------------------------------");
+        //}
 
         #endregion
 

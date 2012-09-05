@@ -21,6 +21,8 @@ namespace FishFoodUI
         SpriteBatch _spriteBatch;
         IStateSimulation _fishBowl;
 
+        public bool JustGo { get; set; }
+
         public Game(IStateSimulation fishBowl)
         {
             _fishBowl = fishBowl;
@@ -43,6 +45,7 @@ namespace FishFoodUI
         }
 
         private Texture2D _fishSprite;
+        private Vector2 _fishSpriteOrigin;
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -51,6 +54,7 @@ namespace FishFoodUI
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _fishSprite = Content.Load<Texture2D>("Fish");
+            _fishSpriteOrigin = new Vector2(15, 15); // rotational center of the fish
         }
 
         /// <summary>
@@ -63,8 +67,13 @@ namespace FishFoodUI
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            // Is the SPACE key down?
-            //if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            // hit space to move forward while pressed, G to just keep going
+            if (Keyboard.GetState().IsKeyDown(Keys.G))
+                JustGo = true;
+            else if (Keyboard.GetState().IsKeyDown(Keys.Space))
+                JustGo = false;
+
+            if (JustGo || Keyboard.GetState().IsKeyDown(Keys.Space))
                   _fishBowl.UpdateState();
             
             if (!_fishBowl.KeepGoing()) // run out of fish, make more 
@@ -79,19 +88,15 @@ namespace FishFoodUI
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            Vector2 origin = new Vector2(0, 0);
+            
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            bool firstFish = true;
             foreach (var fish in _fishBowl.GetState())
             {
                 Vector2 fishPos = new Vector2(fish.X, fish.Y);
-                //Vector2 fishPos = new Vector2(10, 10);
-               
-                _spriteBatch.Draw(_fishSprite, fishPos, null, Color.White, 0, origin, fish.Scale, SpriteEffects.None, 0);
-
+                _spriteBatch.Draw(_fishSprite, fishPos, null, Color.White, fish.Rotate, _fishSpriteOrigin, fish.Scale, SpriteEffects.None, 0);
             }
             _spriteBatch.End();
+
             base.Draw(gameTime);
         }
     }

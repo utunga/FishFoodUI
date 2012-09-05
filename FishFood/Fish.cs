@@ -17,11 +17,6 @@ namespace FishFood
             _latchesIOwn = new List<Latch>();
         }
 
-        public void Draw()
-        {
-            System.Console.Out.WriteLine(this.ToString());
-        }
-
         public override string ToString()
         {
             return _name + ":" + Val;
@@ -41,16 +36,28 @@ namespace FishFood
             }
 
             var move = new Move();
-            if (_latchesIOwn.Any(x=>x.State == LatchState.Dormant))
+            IList<Latch> eatable = new List<Latch>(_latchesIOwn.Where(x => x.State == LatchState.Dormant || x.State == LatchState.Activated));
+            if (eatable.Any())
             {
-                move.Eat = _latchesIOwn.FirstOrDefault();
+                Latch chosen = eatable.Any(x => this.DistanceToFood(x.Target) < 20) ?
+                    eatable.OrderBy(x => this.DistanceToFood(x.Target)).First():
+                    eatable.OrderByDescending(x => x.Target.Val).First();
+                move.MoveTowards = new Tuple<float, float>(chosen.Target.X, chosen.Target.Y); 
+                if (chosen.State != LatchState.Activated)
+                    move.Eat = chosen;
                 return move;
             }
+
             var fishNearMe = _fishBowl.FoodNearMe(this);
             if (fishNearMe.Count > 0)
             {
                 int which = new Random().Next(fishNearMe.Count);
-                move.Latch = new Tuple<Food, int>(fishNearMe[which], fishNearMe[which].Val);
+                Food target = fishNearMe[which];
+                if (!_latchesIOwn.Any(x => x.Target == target) && target!=this)
+                {
+                    move.Latch = new Tuple<Food, int>(target, target.Val);
+                    move.MoveTowards = new Tuple<float, float>(target.X, target.Y);
+                }
             }
             return move;
         }
