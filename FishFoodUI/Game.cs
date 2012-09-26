@@ -41,6 +41,7 @@ namespace FishFoodUI
         protected override void Initialize()
         {
             _fishBowl.Init();
+            JustGo = true;
             base.Initialize();
         }
 
@@ -92,8 +93,7 @@ namespace FishFoodUI
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             foreach (var fish in _fishBowl.GetState())
             {
-                Vector2 fishPos = new Vector2(fish.X, fish.Y);
-                _spriteBatch.Draw(_fishSprite, fishPos, null, Color.White, fish.Rotate, _fishSpriteOrigin, fish.Scale, SpriteEffects.None, 0);
+                _spriteBatch.Draw(_fishSprite, fish.Pos, null, Color.White, fish.Rotate, _fishSpriteOrigin, fish.Scale, SpriteEffects.None, 0);
             }
             _spriteBatch.End();
 

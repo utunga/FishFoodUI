@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+//using FishFood.Quadtree;
+using Microsoft.Xna.Framework;
 
 namespace FishFood
 {
     public class FishBowl : IStateProvider, IStateSimulation
     {
-        private const int INIT_FISH_VAL = 60;
-        private const int NUM_FISH = 300;
+        private const int INIT_FISH_VAL = 400;
+        private const int NUM_FISH = 400;
         private readonly int _maxHeight;
         private readonly int _maxWidth;
+        //private QuadTree<Fish> _fishes;
         private IList<Fish> _fishes;
         private IList<Latch> _latches;
         public const int DEFAULT_WIDTH = 1000;
@@ -18,7 +21,8 @@ namespace FishFood
         public FishBowl(int width,int height)
         {
             _maxWidth = width;
-            _maxHeight = height; 
+            _maxHeight = height;
+            //_fishes = new QuadTree<Fish>(new FRect(0, 0, DEFAULT_HEIGHT, DEFAULT_WIDTH), 3);
             _fishes = new List<Fish>();
             _latches = new List<Latch>();
         }
@@ -30,7 +34,7 @@ namespace FishFood
 
         public IList<Food> FoodNearMe(Fish fish)
         {
-            return new List<Food>(_fishes.AsParallel().OrderBy(x => x.DistanceToFood(fish)).Take(5));
+            return new List<Food>(_fishes.AsParallel().OrderBy(x => x.DistanceToFoodSquared(fish)).Take(5));
         }
 
         #endregion
@@ -39,14 +43,14 @@ namespace FishFood
 
         public void Init()
         {
-            _fishes = new List<Fish>();
+            //
             _latches = new List<Latch>();
             Random rnd = new Random();
             for (int i = 0; i < NUM_FISH; i++)
             {
                 float x = rnd.Next(_maxHeight);
                 float y = rnd.Next(_maxWidth);
-                _fishes.Add(new Fish(this, INIT_FISH_VAL, "fish_" + i, x, y));
+                _fishes.Add(new Fish(this, INIT_FISH_VAL, "fish_" + i, new Vector2(x,y)));
             }
         }
 
@@ -64,7 +68,7 @@ namespace FishFood
 
         public bool KeepGoing()
         {
-            return _fishes.Count > 0;
+            return _fishes.Count > 1;
         }
 
         #endregion
@@ -76,7 +80,7 @@ namespace FishFood
             // eat 
             foreach (Latch eatRequest in _latches.Where(x=>x.State==LatchState.Activated))
             {
-                if (eatRequest.Eater.DistanceToFood(eatRequest.Target) < 20)
+                if (eatRequest.Eater.DistanceToFood(eatRequest.Target) < eatRequest.Eater.Scale*2)
                 {
                     int hunkEaten = Math.Min(Math.Min(eatRequest.Target.Val, eatRequest.Val), eatRequest.Eater.Val/2);
                     eatRequest.Eater.Val += hunkEaten;
@@ -85,10 +89,10 @@ namespace FishFood
                 }
             }
 
-            // starve all fish a little
+            //// starve all fish a little
             foreach (Fish fish in _fishes)
             {
-                fish.Val = fish.Val - (int)Math.Floor(fish.Val*0.008)-1;
+                fish.Val = fish.Val - (int)Math.Floor(fish.Val * 0.008)-1;
             }
             
             // remove dead fish
@@ -151,6 +155,7 @@ namespace FishFood
 
         private void DoBattleAndActivateWinner(Latch latchRequest, Latch counterRequest)
         {
+
             Random rnd = new Random();
             float rollOne = rnd.Next(0, latchRequest.Eater.Val) - rnd.Next(0, latchRequest.Val);
             float rollTwo = rnd.Next(0, counterRequest.Eater.Val) - rnd.Next(0, counterRequest.Val);
@@ -181,15 +186,21 @@ namespace FishFood
                     nextMove.Eat.State = LatchState.RequestActivation;
                 }
 
-                if (nextMove.MoveTowards != null)
+                if (nextMove.MoveTowards != default(Vector2))
                 {
-                    float opposite = (nextMove.MoveTowards.Item1 - fish.X);
-                    float adjacent = (nextMove.MoveTowards.Item2 - fish.Y);
-                    double angle =  (float) Math.Atan2(adjacent, opposite);
+                    //float opposite = (nextMove.MoveTowards.X - fish.Pos.X);
+                    //float adjacent = (nextMove.MoveTowards.Y - fish.Pos.Y);
+                    //double angle =  (float) Math.Atan2(adjacent, opposite);
+                    //fish.Pos.X = fish.X + (float)Math.Cos(angle) * fish.Scale * 3; //bigger fish move faster
+                    //fish.Pos.Y = fish.Y + (float)Math.Sin(angle) * fish.Scale * 3;
+                    if (!fish.Pos.Equals(nextMove.MoveTowards))
+                    {
+                        Vector2 direction = nextMove.MoveTowards - fish.Pos;
+                        direction.Normalize();
+                        fish.Pos = fish.Pos + direction* fish.Scale * 3;
+                        fish.Rotate = (float) Math.Atan2(direction.Y, direction.X);
+                    }
                     
-                    fish.X = fish.X + (float)Math.Cos(angle) * fish.Scale * 3; //bigger fish move faster
-                    fish.Y = fish.Y + (float)Math.Sin(angle) * fish.Scale * 3;
-                    fish.Rotate = (float) angle;
                 }
             }
         }

@@ -1,20 +1,21 @@
 using System;
+//using FishFood.Quadtree;
+using Microsoft.Xna.Framework;
 
 namespace FishFood
 {
     public class Food
     {
-        public float X { get; set; }
-        public float Y { get; set; }
+        public Vector2 Pos { get; set; }
         public float Rotate { get; set; }
         public int Val { get; set; }
         public readonly int MaxVal;
-        public Food(int initVal, float x, float y)
+        public Food(int initVal, Vector2 initPos)
         {
             MaxVal = initVal;
             Val = initVal;
-            X = x;
-            Y = y;
+            //Pos = new QuadTreePositionItem<Food>(this,initPos,new Vector2(1));//FIXME fix size
+            Pos = initPos;
         }
 
         /// <summary>
@@ -28,7 +29,12 @@ namespace FishFood
 
         public double DistanceToFood(Food food)
         {
-            return Math.Sqrt(Math.Pow(this.X - food.X, 2) + Math.Pow(this.Y - food.Y, 2));
+            return Vector2.Distance(this.Pos,food.Pos);
+        }
+
+        public double DistanceToFoodSquared(Food food)
+        {
+            return Vector2.DistanceSquared(this.Pos,food.Pos);
         }
     }
 }

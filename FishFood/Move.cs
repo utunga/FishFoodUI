@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 
 namespace FishFood
 {
@@ -7,6 +8,6 @@ namespace FishFood
         public Tuple<Food, int> Latch;
         public Latch Eat;
         public Tuple<Latch, Fish> Give;
-        public Tuple<float, float> MoveTowards;
+        public Vector2 MoveTowards;
     }
 }
