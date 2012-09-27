@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FishFood;
+using FishFood.Quadtree;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
@@ -20,15 +21,20 @@ namespace FishFoodUI
         GraphicsDeviceManager _graphics;
         SpriteBatch _spriteBatch;
         IStateSimulation _fishBowl;
+        RectangleDrawingSpriteBatch _debugRects;
+ 
+        private Texture2D _fishSprite;
+        private Vector2 _fishSpriteOrigin;
 
-        public bool JustGo { get; set; }
+        public bool AutoRun { get; set; }
+        public bool DebugMode { get; set; }
 
         public Game(IStateSimulation fishBowl)
         {
             _fishBowl = fishBowl;
             _graphics = new GraphicsDeviceManager(this);
-            _graphics.PreferredBackBufferWidth = FishBowl.DEFAULT_WIDTH;
-            _graphics.PreferredBackBufferHeight = FishBowl.DEFAULT_HEIGHT;
+            _graphics.PreferredBackBufferWidth = (int)_fishBowl.WorldRect.Width;
+            _graphics.PreferredBackBufferHeight = (int)_fishBowl.WorldRect.Height;
             Content.RootDirectory = "Content";
         }
 
@@ -41,12 +47,13 @@ namespace FishFoodUI
         protected override void Initialize()
         {
             _fishBowl.Init();
-            JustGo = true;
+            AutoRun = true;
+            DebugMode = false;
+            base.IsFixedTimeStep = false;
             base.Initialize();
         }
 
-        private Texture2D _fishSprite;
-        private Vector2 _fishSpriteOrigin;
+
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -56,6 +63,7 @@ namespace FishFoodUI
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _fishSprite = Content.Load<Texture2D>("Fish");
             _fishSpriteOrigin = new Vector2(15, 15); // rotational center of the fish
+            _debugRects = new RectangleDrawingSpriteBatch(GraphicsDevice);
         }
 
         /// <summary>
@@ -70,12 +78,16 @@ namespace FishFoodUI
 
             // hit space to move forward while pressed, G to just keep going
             if (Keyboard.GetState().IsKeyDown(Keys.G))
-                JustGo = true;
+                AutoRun = true;
+            else if (Keyboard.GetState().IsKeyDown(Keys.D))
+                DebugMode = !DebugMode;
             else if (Keyboard.GetState().IsKeyDown(Keys.Space))
-                JustGo = false;
+                AutoRun = false;
+            else if (Keyboard.GetState().IsKeyDown(Keys.X))
+                _fishBowl.Init();
 
-            if (JustGo || Keyboard.GetState().IsKeyDown(Keys.Space))
-                  _fishBowl.UpdateState();
+            if (AutoRun || Keyboard.GetState().IsKeyDown(Keys.Space))
+                  _fishBowl.UpdateState(gameTime.IsRunningSlowly);
             
             if (!_fishBowl.KeepGoing()) // run out of fish, make more 
                 _fishBowl.Init();
@@ -89,15 +101,29 @@ namespace FishFoodUI
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            
-            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+
+            _spriteBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend);
             foreach (var fish in _fishBowl.GetState())
             {
                 _spriteBatch.Draw(_fishSprite, fish.Pos, null, Color.White, fish.Rotate, _fishSpriteOrigin, fish.Scale, SpriteEffects.None, 0);
             }
             _spriteBatch.End();
 
-            base.Draw(gameTime);
+            if (DebugMode)
+            {
+                _debugRects.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend);
+                foreach (var fish in _fishBowl.GetState())
+                {
+                    QuadTreeNode<Food> containingNode = fish.QuadTreePosition.LastAddedToQuadTreeNode;
+                    if (containingNode != null)
+                    {
+                        _debugRects.DrawRectangle(containingNode.Rect.IntegerRect, Color.Wheat);
+                    }
+                }
+                _debugRects.End();
+            }
+
+            //base.Draw(gameTime);
         }
     }
 }
